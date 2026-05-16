@@ -13,12 +13,14 @@ Sebelum menginstal aplikasi, pastikan sistem Anda memenuhi persyaratan berikut:
 ## Langkah Instalasi
 
 1. Clone repository
+
 ```bash
 git clone <repository-url>
 cd nuxt-sayur
 ```
 
 2. Install dependensi
+
 ```bash
 npm install
 # atau
@@ -28,18 +30,20 @@ bun install
 ```
 
 3. Konfigurasi environment
-Buat file `.env` di root project dan isi dengan konfigurasi berikut:
+   Salin `.env.example` menjadi `.env`, lalu sesuaikan jika perlu:
+
 ```plaintext
-NUXT_USER_API_BASE_URL=<url_api_user>
-NUXT_ORDER_API_BASE_URL=<url_api_order>
-NUXT_PRODUCT_API_BASE_URL=<url_api_product>
-NUXT_PAYMENT_API_BASE_URL=<url_api_payment>
-NUXT_NOTIFICATION_API_BASE_URL=<url_api_notification>
+NUXT_USER_API_BASE_URL=http://localhost:8090
+NUXT_ORDER_API_BASE_URL=http://localhost:8083
+NUXT_PRODUCT_API_BASE_URL=http://localhost:8082
+NUXT_PAYMENT_API_BASE_URL=http://localhost:8084
+NUXT_NOTIFICATION_API_BASE_URL=http://localhost:8085
 ```
 
 ## Menjalankan Aplikasi
 
 ### Mode Development
+
 ```bash
 npm run dev
 # atau
@@ -47,10 +51,13 @@ yarn dev
 # atau
 bun dev
 ```
+
 Aplikasi akan berjalan di `http://localhost:3000`
 
 ### Mode Production
+
 1. Build aplikasi
+
 ```bash
 npm run build
 # atau
@@ -60,6 +67,7 @@ bun run build
 ```
 
 2. Jalankan aplikasi
+
 ```bash
 npm run start
 # atau
@@ -110,5 +118,3 @@ Silakan buat pull request untuk kontribusi pada project ini.
 ## Lisensi
 
 [MIT License](LICENSE)
-
-        
