@@ -137,7 +137,7 @@ const calculateDiscountedPrice = computed(() => {
 
 // Handle image error
 const handleImageError = (event) => {
-  event.target.src = '/images/no-image-placeholder.png'
+  event.target.src = "/images/no-image-placeholder.png";
 };
 
 // Format harga ke format Rupiah
