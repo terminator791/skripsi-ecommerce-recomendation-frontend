@@ -21,6 +21,8 @@ export default defineNuxtConfig({
         process.env.NUXT_PAYMENT_API_BASE_URL ?? "http://localhost:8084",
       apiNotificationBaseUrl:
         process.env.NUXT_NOTIFICATION_API_BASE_URL ?? "http://localhost:8085",
+      apiRecommendationBaseUrl:
+        process.env.NUXT_RECOMMENDATION_API_BASE_URL ?? "http://localhost:8086",
     },
   },
 

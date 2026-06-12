@@ -1,5 +1,6 @@
 <template>
   <div>
+    <!-- Hero Slider -->
     <section class="mt-8">
       <div class="container">
         <Swiper
@@ -14,14 +15,8 @@
           :space-between="100"
           @swiper="onSwiper"
           @slideChange="onSlideChange"
-          :pagination="{
-            clickable: true,
-            el: '.swiper-pagination',
-          }"
-          :autoplay="{
-            delay: 3000,
-            disableOnInteraction: false,
-          }"
+          :pagination="{ clickable: true, el: '.swiper-pagination' }"
+          :autoplay="{ delay: 3000, disableOnInteraction: false }"
           :breakpoints="{
             480: { slidesPerView: 1 },
             768: { slidesPerView: 1 },
@@ -29,7 +24,6 @@
           }"
           class="swiper-container"
         >
-          <!-- Slide 1 -->
           <SwiperSlide>
             <div
               class="relative rounded-lg overflow-hidden"
@@ -71,8 +65,6 @@
               </div>
             </div>
           </SwiperSlide>
-
-          <!-- Slide 2 -->
           <SwiperSlide>
             <div
               class="relative rounded-lg overflow-hidden"
@@ -95,10 +87,8 @@
                   <h2
                     class="text-gray-900 text-xl lg:text-5xl font-bold leading-tight"
                   >
-                    Free Shipping on
-                    <br />
-                    orders over
-                    <span class="text-green-600">$100</span>
+                    Free Shipping on <br />
+                    orders over <span class="text-green-600">$100</span>
                   </h2>
                   <p class="text-md font-light">
                     Free Shipping to First-Time Customers Only, After promotions
@@ -119,12 +109,11 @@
               </div>
             </div>
           </SwiperSlide>
-
-          <!-- Pagination -->
           <div class="swiper-pagination !bottom-14"></div>
         </Swiper>
       </div>
     </section>
+
     <!-- Categories Section -->
     <section class="mt-8">
       <div class="container">
@@ -133,16 +122,12 @@
             <h2 class="text-lg absolute z-10">Featured Categories</h2>
           </div>
         </div>
-
         <Swiper
           :modules="[SwiperAutoplay, SwiperNavigation]"
           :speed="400"
           :space-between="20"
           :navigation="true"
-          :autoplay="{
-            delay: 3000,
-            disableOnInteraction: false,
-          }"
+          :autoplay="{ delay: 3000, disableOnInteraction: false }"
           :breakpoints="{
             480: { slidesPerView: 2 },
             768: { slidesPerView: 3 },
@@ -170,7 +155,70 @@
       </div>
     </section>
 
-    <!-- Featured Products -->
+    <!-- Recommendation Products -->
+    <section
+      v-if="hasRecommendations || recommendationStore.loading"
+      class="lg:my-14 my-8"
+    >
+      <div class="container">
+        <div class="flex flex-wrap">
+          <div class="w-full mb-6">
+            <h2 class="text-lg flex items-center gap-2">
+              <Icon name="tabler:sparkles" class="text-green-600" size="20" />
+              Rekomendasi Untuk Anda
+            </h2>
+            <p
+              class="text-sm text-gray-500 mt-1"
+              v-if="recommendationStore.loading"
+            >
+              Memuat rekomendasi...
+            </p>
+            <p
+              class="text-sm text-gray-500 mt-1"
+              v-else-if="recommendationStore.pipelineInfo"
+            >
+              {{
+                recommendationStore.pipelineInfo.pipeline_type === "cold_start"
+                  ? "Populer saat ini"
+                  : "Berdasarkan preferensi Anda"
+              }}
+              &bull; {{ recommendationStore.pipelineInfo.total_latency_ms }}ms
+            </p>
+          </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div
+          v-if="recommendationStore.loading"
+          class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-4 xl:grid-cols-5"
+        >
+          <div
+            v-for="n in 5"
+            :key="n"
+            class="rounded-lg border border-gray-200 bg-white p-4 animate-pulse"
+          >
+            <div class="bg-gray-200 h-40 rounded mb-3"></div>
+            <div class="bg-gray-200 h-4 rounded w-1/3 mb-2"></div>
+            <div class="bg-gray-200 h-4 rounded w-2/3 mb-2"></div>
+            <div class="bg-gray-200 h-4 rounded w-1/2"></div>
+          </div>
+        </div>
+
+        <!-- Actual recommendations -->
+        <div
+          v-else
+          class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-4 xl:grid-cols-5"
+        >
+          <ProductCard
+            v-for="product in recommendationStore.recommendations"
+            :key="product.id"
+            :product="product"
+          />
+        </div>
+      </div>
+    </section>
+
+    <!-- New Products -->
     <section class="lg:my-14 my-8">
       <div class="container">
         <div class="flex flex-wrap">
@@ -178,7 +226,6 @@
             <h2 class="text-lg">New Products</h2>
           </div>
         </div>
-
         <div
           class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-4 xl:grid-cols-5"
         >
@@ -238,7 +285,7 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, computed } from "vue";
 import ProductCard from "~/components/home/ProductCard.vue";
 import { Swiper, SwiperSlide } from "swiper/vue";
 import { Autoplay, EffectFade, Pagination, Navigation } from "swiper/modules";
@@ -248,56 +295,52 @@ import "swiper/css/pagination";
 import "swiper/css/navigation";
 import { useCategoryStore } from "~/stores/category";
 import { useProductStore } from "~/stores/product";
+import { useRecommendationStore } from "~/stores/recommendation";
+import { useAuthStore } from "~/stores/auth";
+
 const categories = ref([]);
 const categoryStore = useCategoryStore();
 const featuredProducts = ref([]);
 const productStore = useProductStore();
+const recommendationStore = useRecommendationStore();
+const authStore = useAuthStore();
 
-// Definisikan modul Swiper yang akan digunakan
 const SwiperAutoplay = Autoplay;
 const SwiperEffectFade = EffectFade;
 const SwiperPagination = Pagination;
 const SwiperNavigation = Navigation;
 
+const hasRecommendations = computed(
+  () => recommendationStore.recommendations.length > 0,
+);
+
 useHead({
   script: [
-    {
-      src: "/libs/bootstrap/dist/js/bootstrap.bundle.min.js",
-      body: true,
-    },
-    {
-      src: "/js/vendors/zoom.js",
-      body: true,
-    },
-    {
-      src: "/libs/simplebar/dist/simplebar.min.js",
-      body: true,
-    },
-    {
-      src: "/js/theme.min.js",
-      body: true,
-    },
-    {
-      src: "/js/vendors/countdown.js",
-      body: true,
-    },
-    {
-      src: "/libs/tiny-slider/dist/min/tiny-slider.js",
-      body: true,
-    },
-    {
-      src: "/js/vendors/tns-slider.js",
-      body: true,
-    },
+    { src: "/libs/bootstrap/dist/js/bootstrap.bundle.min.js", body: true },
+    { src: "/js/vendors/zoom.js", body: true },
+    { src: "/libs/simplebar/dist/simplebar.min.js", body: true },
+    { src: "/js/theme.min.js", body: true },
+    { src: "/js/vendors/countdown.js", body: true },
+    { src: "/libs/tiny-slider/dist/min/tiny-slider.js", body: true },
+    { src: "/js/vendors/tns-slider.js", body: true },
   ],
 });
 
 onMounted(async () => {
-  const response = await categoryStore.fetchCategoriesHome();
-  categories.value = response.data;
+  // Fetch recommendations (non-blocking, runs in parallel)
+  const recParams = {};
+  if (authStore.token && authStore.user?.id) {
+    recParams.user_id = authStore.user.id;
+  }
+  recommendationStore.fetchRecommendations(recParams);
 
-  const responseFeatured = await productStore.fetchProductsHome();
-  featuredProducts.value = responseFeatured.data;
+  // Fetch categories and featured products
+  const [catRes, prodRes] = await Promise.all([
+    categoryStore.fetchCategoriesHome(),
+    productStore.fetchProductsHome(),
+  ]);
+  categories.value = catRes.data;
+  featuredProducts.value = prodRes.data;
 });
 </script>
 
