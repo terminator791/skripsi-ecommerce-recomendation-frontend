@@ -23,11 +23,12 @@
                     <div 
                         class="zoom" 
                         @mousemove="handleZoom"
-                        :style="{ backgroundImage: `url(${child.image || defaultImage})` }"
+                        :style="{ backgroundImage: `url(${resolveImage(child.image) || defaultImage})` }"
                     >
-                        <img :src="child.image || defaultImage" :alt="`${product?.product_name || 'Product'} - ${child.weight}${product?.unit}`" class="w-full" />
+                        <img :src="resolveImage(child.image) || defaultImage" :alt="`${product?.product_name || 'Product'} - ${child.weight}${product?.unit}`" class="w-full" />
                     </div>
                 </SwiperSlide>
+
             </Swiper>
         </div>
         
@@ -50,8 +51,9 @@
                     :key="index"
                     class="cursor-pointer"
                 >
-                    <img :src="child.image || defaultImage" :alt="`${product?.product_name || 'Product'} - ${child.weight}${product?.unit}`" class="w-full" />
+                    <img :src="resolveImage(child.image) || defaultImage" :alt="`${product?.product_name || 'Product'} - ${child.weight}${product?.unit}`" class="w-full" />
                 </SwiperSlide>
+
             </Swiper>
         </div>
     </div>
@@ -100,9 +102,22 @@ const handleZoom = (event) => {
     zoomer.style.backgroundPosition = `${x}% ${y}%`
 }
 
+// Product images are stored as relative paths (e.g. "images/unknown/.../image_0.jpg")
+// served by the recommendation service. Prefix them with the service base URL.
+// Already-absolute URLs (http/https) and local placeholders are left untouched.
+const resolveImage = (image) => {
+    if (!image) return ''
+    if (/^(https?:)?\/\//.test(image) || image.startsWith('/')) {
+        return image
+    }
+    const baseUrl = useRuntimeConfig().public.apiRecommendationBaseUrl
+    return `${baseUrl}/${image}`
+}
+
 const defaultImage = computed(() => {
-    return props.product?.image || '/images/placeholder.jpg'
+    return resolveImage(props.product?.image) || '/images/placeholder.jpg'
 })
+
 </script>
 
 <style scoped>
