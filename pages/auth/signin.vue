@@ -73,6 +73,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import { usePreferenceStore } from '~/stores/preference'
 import { useRouter } from 'vue-router'
 
 definePageMeta({
@@ -81,6 +82,8 @@ definePageMeta({
 
 const router = useRouter()
 const authStore = useAuthStore()
+const preferenceStore = usePreferenceStore()
+
 
 const email = ref('')
 const password = ref('')
@@ -98,8 +101,15 @@ const handleSubmit = async () => {
     if (authStore.user?.role === 'Super Admin') {
         router.push('/dashboard')
     } else {
-        router.push('/')
+        // Cold start: arahkan customer baru ke onboarding bila belum punya preferensi.
+        const hasPreference = await preferenceStore.checkPreference()
+        if (hasPreference) {
+            router.push('/')
+        } else {
+            router.push('/auth/onboarding')
+        }
     }
+
   } catch (error) {
     // Error sudah ditangani di store
     console.error('Login error:', error)
