@@ -296,8 +296,72 @@
         </div>
       </div>
     </section>
+
+    <!-- Produk Serupa (PDP item-to-item) -->
+    <section
+      v-if="
+        recommendationStore.pdpRecommendations.length > 0 ||
+        recommendationStore.pdpLoading
+      "
+      class="mb-14"
+    >
+      <div class="container">
+        <div class="flex flex-wrap">
+          <div class="w-full mb-6">
+            <h2 class="text-lg flex items-center gap-2">
+              <Icon name="tabler:sparkles" class="text-green-600" size="20" />
+              Produk Serupa
+            </h2>
+            <p
+              class="text-sm text-gray-500 mt-1"
+              v-if="recommendationStore.pdpLoading"
+            >
+              Memuat produk serupa...
+            </p>
+            <p
+              class="text-sm text-gray-500 mt-1"
+              v-else-if="recommendationStore.pdpPipelineInfo"
+            >
+              Berdasarkan produk yang Anda lihat
+              &bull;
+              {{ recommendationStore.pdpPipelineInfo.total_latency_ms }}ms
+            </p>
+          </div>
+        </div>
+
+        <!-- Loading skeleton -->
+        <div
+          v-if="recommendationStore.pdpLoading"
+          class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-4 xl:grid-cols-5"
+        >
+          <div
+            v-for="n in 5"
+            :key="n"
+            class="rounded-lg border border-gray-200 bg-white p-4 animate-pulse"
+          >
+            <div class="bg-gray-200 h-40 rounded mb-3"></div>
+            <div class="bg-gray-200 h-4 rounded w-1/3 mb-2"></div>
+            <div class="bg-gray-200 h-4 rounded w-2/3 mb-2"></div>
+            <div class="bg-gray-200 h-4 rounded w-1/2"></div>
+          </div>
+        </div>
+
+        <!-- Actual similar products -->
+        <div
+          v-else
+          class="grid gap-4 grid-cols-1 md:grid-cols-2 lg:gap-4 xl:grid-cols-5"
+        >
+          <ProductCard
+            v-for="product in recommendationStore.pdpRecommendations"
+            :key="product.id"
+            :product="product"
+          />
+        </div>
+      </div>
+    </section>
   </main>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from "vue";
@@ -305,15 +369,19 @@ import { useAuthStore } from "~/stores/auth";
 import { useRouter, useRoute } from "vue-router";
 import { useProductStore } from "~/stores/product";
 import { useCartStore } from "~/stores/cart";
+import { useRecommendationStore } from "~/stores/recommendation";
 import ProductSingleGallery from "~/components/home/ProductSingleGallery.vue";
+import ProductCard from "~/components/home/ProductCard.vue";
 
 const featuredProduct = ref({});
 const productStore = useProductStore();
 const authStore = useAuthStore();
+const recommendationStore = useRecommendationStore();
 const route = useRoute();
 const router = useRouter();
 const cartStore = useCartStore();
 const productId = route.params.id;
+
 
 const selectedChild = ref(null);
 const quantity = ref(1);
@@ -339,7 +407,11 @@ onMounted(async () => {
   featuredProduct.value = response.data;
   // Set default selected variant to first child if exists
   selectedChild.value = null;
+
+  // Fetch "Produk Serupa" recommendations (non-blocking, silent fail)
+  recommendationStore.fetchPdpRecommendations(productId, 5);
 });
+
 
 const formatPrice = (price) => {
   return new Intl.NumberFormat("id-ID").format(price);

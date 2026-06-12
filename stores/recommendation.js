@@ -6,7 +6,13 @@ export const useRecommendationStore = defineStore('recommendation', {
         pipelineInfo: null,
         loading: false,
         error: null,
+        // PDP item-to-item "Produk Serupa"
+        pdpRecommendations: [],
+        pdpPipelineInfo: null,
+        pdpLoading: false,
+        pdpError: null,
     }),
+
 
     actions: {
         async fetchRecommendations(params = {}) {
@@ -63,6 +69,57 @@ export const useRecommendationStore = defineStore('recommendation', {
             } finally {
                 this.loading = false
             }
+        },
+
+        async fetchPdpRecommendations(productId, limit = 5) {
+            try {
+                this.pdpLoading = true
+                this.pdpError = null
+
+                const baseUrl = useRuntimeConfig().public.apiRecommendationBaseUrl
+                const response = await fetch(`${baseUrl}/recommend/pdp/${productId}?limit=${limit}`, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+
+                const result = await response.json()
+
+                // Map API response to ProductCard-compatible format
+                this.pdpRecommendations = (result.data || []).map(item => ({
+                    id: item.product_id,
+                    product_name: item.product_name,
+                    sale_price: item.sale_price,
+                    reguler_price: item.reguler_price,
+                    price: item.price,
+                    rating: item.rating,
+                    review_count: item.review_count,
+                    sold_count: item.sold_count,
+                    category_name: item.category_name,
+                    product_image: item.image_url ? `${baseUrl}/${item.image_url}` : '/images/no-image-placeholder.png',
+                    recommendation_score: item.score,
+                    recommendation_rank: item.rank,
+                }))
+
+                this.pdpPipelineInfo = {
+                    anchor_id: result.anchor_id,
+                    pipeline_type: result.pipeline_type,
+                    stage1: result.stage1,
+                    stage2: result.stage2,
+                    total_latency_ms: result.total_latency_ms,
+                }
+
+                return result
+
+            } catch (err) {
+                this.pdpError = err.message
+                console.error('Error fetching PDP recommendations:', err)
+                // Silent fail - recommendations are optional
+                this.pdpRecommendations = []
+            } finally {
+                this.pdpLoading = false
+            }
         }
     }
 })
+
